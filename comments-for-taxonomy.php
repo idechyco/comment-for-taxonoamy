@@ -22,6 +22,8 @@ echo $current_user->user_email , $uu ;
 echo $current_user->user_email , $oo;
 
 
+
+
 function bbloomer_shop_product_short_description() {
 	the_excerpt();
 }
@@ -36,5 +38,11 @@ function new_excerpt_more( $more ) {
 }
 add_filter('excerpt_more', 'new_excerpt_more');
 
+
+
+
+$current_user = wp_get_current_user();
+echo $current_user->user_email , $uu ;
+echo $current_user->user_email , $oo;
 
 ?>
