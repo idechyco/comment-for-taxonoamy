@@ -19,6 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $current_user = wp_get_current_user();
 echo $current_user->user_email , $uu ;
+echo $current_user->user_email , $oo;
 
 
 function bbloomer_shop_product_short_description() {
