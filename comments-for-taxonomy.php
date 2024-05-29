@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Comments For Taxonomy
 Plugin URI:   https://idechy.ir/
-Description:  کامنت
+Description:  افزودن قابلیت کامنت گذاری در صفحات دسته بندی 
 Version:      1.0
 Author:       idechy
 Author URI:   https://idechy.ir/
