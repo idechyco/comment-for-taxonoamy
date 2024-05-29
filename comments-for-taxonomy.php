@@ -38,7 +38,7 @@ function create_term_comments_table() {
         KEY comment_term_id (comment_term_id),
         KEY comment_author_email (comment_author_email),
         KEY comment_date (comment_date),
-        KEY comment_approved (comment_approved),
+        KEY comment_approved (comment_approved)
     ) $charset_collate;";
 
     require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
