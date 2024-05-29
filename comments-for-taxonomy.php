@@ -33,4 +33,17 @@ function new_excerpt_more( $more ) {
 add_filter('excerpt_more', 'new_excerpt_more');
 
 
+function display_custom_term_table(){
+	echo 'موفق باشی پسر !';
+	echo '<div class="">';
+}
+
+function add_custom_table_to_term_archive($query) {
+    if ($query->is_main_query() && (is_tax() || is_category() || is_tag())) {
+        add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
+    }
+}
+add_action('pre_get_posts', 'add_custom_table_to_term_archive');
+
+
 ?>
