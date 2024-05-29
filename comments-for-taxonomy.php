@@ -60,4 +60,6 @@ function add_custom_table_to_term_archive($query) {
 add_action('pre_get_posts', 'add_custom_table_to_term_archive');
 
 
+
+
 ?>
