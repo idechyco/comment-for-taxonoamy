@@ -22,9 +22,7 @@ echo $current_user->user_email , $uu ;
 echo $current_user->user_email , $oo;
 
 
-
-
-function bbloomer_shop_product_short_description() {
+function bbloomer_shop_product_short_description($current_user) {
 	the_excerpt();
 }
 
