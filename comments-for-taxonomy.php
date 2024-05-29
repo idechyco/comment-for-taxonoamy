@@ -17,20 +17,34 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit();
 }
 
+function create_term_comments_table() {
+    global $wpdb;
 
-function bbloomer_shop_product_short_description() {
-	the_excerpt();
-}
+    $table_name = $wpdb->prefix . 'term_comments';
 
-function my_excerpt_length($length){
-	return 20;
-}
-add_filter('excerpt_length', 'my_excerpt_length');
+    $charset_collate = $wpdb->get_charset_collate();
 
-function new_excerpt_more( $more ) {
-	return ' ... ';
+    $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        comment_id bigint(20) NOT NULL AUTO_INCREMENT,
+        comment_term_id bigint(20) NOT NULL,
+		comment_author tinytext NOT NULL,
+		comment_author_email varchar(100) NOT NULL,
+		comment_date datetime DEFAULT current_timestamp(),
+		comment_content text NOT NULL,
+		comment_approved varchar(20) DEFAULT 0,
+		comment_parent bigint(20) DEFAULT 0,
+		user_id bigint(20),
+        PRIMARY KEY  (comment_id),
+        KEY comment_term_id (comment_term_id),
+        KEY comment_author_email (comment_author_email),
+        KEY comment_date (comment_date),
+        KEY comment_approved (comment_approved),
+    ) $charset_collate;";
+
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    dbDelta( $sql );
 }
-add_filter('excerpt_more', 'new_excerpt_more');
+add_action( 'after_setup_theme', 'create_term_comments_table' );
 
 
 function display_custom_term_table(){
