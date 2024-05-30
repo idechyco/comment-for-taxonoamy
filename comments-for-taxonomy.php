@@ -53,12 +53,11 @@ function display_custom_term_table(){
 	$userEmail = $current_user->user_email;
 	$userName = $current_user->display_name;
 	$userId = $current_user->ID;
-	echo $current_term_id;
 	// echo '<pre>';
 	// echo print_r($current_user);
 	// echo '</pre>'; ?>
 	<div class="termCommentsFormParent">
-        <form>
+        <form action="" method="post">
             <div class="userNameAuthorParent">
                 <?php
                     if ( is_user_logged_in() ){
@@ -85,9 +84,15 @@ function display_custom_term_table(){
             </div>
             <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
             <input name="user_id" type="hidden" value="<?php echo $userId ?>">
+            <input name="comment_term_id" type="hidden" value="0">
+            <input name="co" type="hidden" value="0">
+            <input type="submit" value="Send">
         </form>
+
+        
 	</div>
     <?php
+
 }
 
 function add_custom_table_to_term_archive($query) {
