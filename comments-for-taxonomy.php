@@ -59,5 +59,59 @@ function add_custom_table_to_term_archive($query) {
 }
 add_action('pre_get_posts', 'add_custom_table_to_term_archive');
 
+function handle_custom_form_submission() {
+    if (!isset($_POST['term_comment_form_submit_field']) || !wp_verify_nonce($_POST['term_comment_form_submit_field'], 'term_comment_form_submit')) {
+        echo '<p>درخواست معتبر نیست.</p>';
+        return;
+    }
+    // Sanitize input
+    $comment_term_id = sanitize_text_field($_POST['comment_term_id']);
+    $comment_author = sanitize_text_field($_POST['comment_author']);
+    $comment_author_email = sanitize_text_field($_POST['comment_author_email']);
+    $comment_date = current_time('mysql');
+    $comment_content = sanitize_text_field($_POST['comment_content']);
+    $comment_approved = sanitize_text_field($_POST['comment_approved']);
+    $comment_parent = sanitize_text_field($_POST['comment_parent']);
+    $user_id = sanitize_text_field($_POST['user_id']);
+    // Validate input
+    if (empty($comment_term_id) || empty($comment_author) || empty($comment_author_email) || empty($comment_content) || empty($comment_approved) || empty($comment_parent) || empty($user_id)) {
+        echo '<p>لطفا فیلدهای مورد نیاز را تکمیل نمایید.</p>';
+        return;
+    }
+
+    // Insert data into the custom table
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'term_comments';
+
+    $inserted = $wpdb->insert(
+        $table_name,
+        [
+            'comment_term_id' => $comment_term_id,
+            'comment_author' => $comment_author,
+            'comment_author_email' => $comment_author_email,
+            'comment_date' => $comment_date,
+            'comment_content' => $comment_content,
+            'comment_approved' => $comment_approved,
+            'comment_parent' => $comment_parent,
+            'user_id' => $user_id
+        ],
+        [
+            '%d',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%s',
+            '%d',
+            '%d'
+        ]
+    );
+
+    if ($inserted) {
+        echo '<p>سپاسگزاریم؛ دیدگاه شما پس از بررسی منتشر خواهد شد</p>';
+    } else {
+        echo '<p>دیدگاه ارسال نشد.</p>';
+    }
+}
 
 ?>
