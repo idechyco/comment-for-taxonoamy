@@ -47,6 +47,20 @@ function create_term_comments_table() {
 add_action( 'after_setup_theme', 'create_term_comments_table' );
 
 
+function term_comments_admin_enqueue() {
+    wp_register_script( 'term-comments-admin-script', get_template_directory_uri() . '/admin-script.js', false, '1.0.0',true );
+    wp_enqueue_script( 'custom_wp_admin_css' );
+}
+add_action( 'admin_enqueue_scripts', 'wpdocs_enqueue_custom_admin_style' );
+
+function term_comments_main_enqueue() {
+    wp_register_script( 'term-comments-main-script', get_template_directory_uri() . '/main-script.js', false, '1.0.0',true );
+    wp_enqueue_script( 'custom_wp_admin_css' );
+}
+add_action( 'wp_enqueue_scripts', 'wpdocs_enqueue_custom_admin_style' );
+
+
+
 function display_custom_term_table(){
     $current_term_id = get_queried_object_id();
 	$current_user = wp_get_current_user();
