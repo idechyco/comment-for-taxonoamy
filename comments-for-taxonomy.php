@@ -74,36 +74,55 @@ function display_custom_term_table(){
         echo $data;
     }
     ?>
-    <div class="comments-area">
+    <div class="comments-area">  
+        <?php
+            function render_comments($comments, $parent_id = 0) {
+            $output = '';
+            $children = array_filter($comments, function($comment) use ($parent_id) {
+                return $comment->comment_parent == $parent_id;
+            });
+
+            if ($children) {
+                $output .= '<ol class="comment-list' . ($parent_id ? ' children' : '') . '">';
+                foreach ($children as $comment) {
+                    $comment_date = new DateTime($comment->comment_date);
+                    $formatted_date = $comment_date->format('Y-m-d');
+                    $output .= "<li class='comment' id='comment-" . htmlspecialchars($comment->comment_id) . "'>";
+                    $output .= "<div class='comment-body'>";
+                    $output .= "<div class='comment-author vcard'>";
+                    $output .= "<b class='fn'>" . htmlspecialchars($comment->comment_author) . "</b> ";
+                    $output .= "<span class='says'>گفت : </span>";
+                    $output .= "</div>";
+                    $output .= "<div class='comment-meta commentmetadata'>";
+                    $output .= "<a href='#'>";
+                    $output .= "<time datetime='" . htmlspecialchars($comment->comment_date) . "'>" . htmlspecialchars($formatted_date) . "</time>";
+                    $output .= "</a>";
+                    $output .= "</div>";
+                    $output .= "<div class='comment-content'>";
+                    $output .= "<p>" . nl2br(htmlspecialchars($comment->comment_content)) . "</p>";
+                    $output .= "</div>";
+                    $output .= "<div class='reply'>";
+                    $output .= "<a href='#comment-" . htmlspecialchars($comment->comment_id) . "' class='comment-reply-link'>پاسخ</a>";
+                    $output .= "</div>";
+                    $output .= "</div>";
+                    $output .= render_comments($comments, $comment->comment_id);
+                    $output .= "</li>";
+                }
+                $output .= '</ol>';
+            }
+            return $output;
+        }
+        ?>
         <div class="termCommentsListParent">
             <?php
-                global $wpdb;
-                $results = $wpdb->get_results("SELECT * FROM wp_term_comments WHERE comment_approved=1");
-                echo "<ol class='comment-list'>";
-                foreach ($results as $row) {
-                    $comment_date = new DateTime($row->comment_date);
-                    $formatted_date = $comment_date->format('Y-m-d');
-                    echo "<li class='comment'>";
-                    echo "<div class='comment-body'>";
-                    echo "<div class='comment-author vcard'>";
-                    echo "<b class='fn'>" . htmlspecialchars($row->comment_author) . "</b> ";
-                    echo "<span class='says'>گفت : </span>";
-                    echo "</div>";
-                    echo "<div class='comment-meta commentmetadata'>";
-                    echo "<a href='#'>";
-                    echo "<time datetime='" . htmlspecialchars($row->comment_date) . "'>" . htmlspecialchars($formatted_date) . "</time>";
-                    echo "</a>";
-                    echo "</div>";
-                    echo "<div class='comment-content'>";
-                    echo "<p>" . nl2br(htmlspecialchars($row->comment_content)) . "</p>";
-                    echo "</div>";
-                    echo "<div class='reply'>";
-                    echo "<a href='#' class='comment-reply-link'>پاسخ</a>";
-                    echo "</div>";
-                    echo "</div>";
-                    echo "</li>";
-                }
-                echo "</ol>";
+            global $wpdb;
+            $results = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM wp_term_comments WHERE comment_approved = 1 AND comment_term_id = %d",
+                $current_term_id
+            ));
+            if ($results) {
+                echo render_comments($results);
+            }
             ?>
         </div>
         <div class="termCommentsFormParent">
