@@ -64,7 +64,7 @@ function display_custom_term_table(){
         <div class="termCommentsListParent">
             <?php
                 global $wpdb;
-                $results = $wpdb->get_results("SELECT * FROM wp_term_comments");
+                $results = $wpdb->get_results("SELECT * FROM wp_term_comments WHERE comment_approved=1");
                 echo "<ol class='comment-list'>";
                 foreach ($results as $row) {
                     $comment_date = new DateTime($row->comment_date);
