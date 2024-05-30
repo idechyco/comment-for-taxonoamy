@@ -60,44 +60,75 @@ function display_custom_term_table(){
         echo $data;
     }
     ?>
-	<div class="termCommentsFormParent">
-        <form method="post">
-            <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
-            <div class="userNameAuthorParent">
-                <?php
-                    if ( is_user_logged_in() ){
-                        echo '<input class="userNameLoggedin" name="comment_author" type="hidden" value="'.$userName.'">';
-                    } else{
-                        echo '<label>نام : </label>';
-                        echo '<input class="userNameAuthor" name="comment_author" type="text">';
-                    }
-                ?>
-            </div>
-            <div class="userEmailAuthorParent">
-                <?php
-                    if ( is_user_logged_in() ){
-                        echo '<input class="userNameLoggedin" name="comment_author_email" type="hidden" value="'.$userEmail.'">';
-                    } else{
-                        echo '<label>ایمیل : </label>';
-                        echo '<input class="userNameAuthor" name="comment_author_email" type="email">';
-                    }
-                ?>
-            </div>
-            <div class="userCommentContentParent">
-                <label>دیدگاه : </label>
-                <textarea class="userCommentContent" name="comment_content"></textarea>
-            </div>
-            <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
-            <input name="user_id" type="hidden" value="<?php echo $userId ?>">
-            <input name="comment_parent" type="hidden" value="0">
-            <input name="comment_approved" type="hidden" value="0">
-            <input type="submit" value="Send" name="term_comment_submit">
-        </form>
-
-        
-	</div>
+    <div class="comments-area">
+        <div class="termCommentsListParent">
+            <?php
+                global $wpdb;
+                $results = $wpdb->get_results("SELECT * FROM wp_term_comments");
+                echo "<ol class='comment-list'>";
+                foreach ($results as $row) {
+                    $comment_date = new DateTime($row->comment_date);
+                    $formatted_date = $comment_date->format('Y-m-d');
+                    echo "<li class='comment'>";
+                    echo "<div class='comment-body'>";
+                    echo "<div class='comment-author vcard'>";
+                    echo "<b class='fn'>" . htmlspecialchars($row->comment_author) . "</b> ";
+                    echo "<span class='says'>گفت : </span>";
+                    echo "</div>";
+                    echo "<div class='comment-meta commentmetadata'>";
+                    echo "<a href='#'>";
+                    echo "<time datetime='" . htmlspecialchars($row->comment_date) . "'>" . htmlspecialchars($formatted_date) . "</time>";
+                    echo "</a>";
+                    echo "</div>";
+                    echo "<div class='comment-content'>";
+                    echo "<p>" . nl2br(htmlspecialchars($row->comment_content)) . "</p>";
+                    echo "</div>";
+                    echo "<div class='reply'>";
+                    echo "<a href='#' class='comment-reply-link'>پاسخ</a>";
+                    echo "</div>";
+                    echo "</div>";
+                    echo "</li>";
+                }
+                echo "</ol>";
+            ?>
+        </div>
+        <div class="termCommentsFormParent">
+            <h3 class="termCommentsFormTitle">دیدگاهتان را بنویسید</h3>
+            <form method="post">
+                <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
+                <div class="userNameAuthorParent">
+                    <?php
+                        if ( is_user_logged_in() ){
+                            echo '<input class="userNameLoggedin" name="comment_author" type="hidden" value="'.$userName.'">';
+                        } else{
+                            echo '<label>نام : </label>';
+                            echo '<input class="userNameAuthor" name="comment_author" type="text">';
+                        }
+                    ?>
+                </div>
+                <div class="userEmailAuthorParent">
+                    <?php
+                        if ( is_user_logged_in() ){
+                            echo '<input class="userNameLoggedin" name="comment_author_email" type="hidden" value="'.$userEmail.'">';
+                        } else{
+                            echo '<label>ایمیل : </label>';
+                            echo '<input class="userNameAuthor" name="comment_author_email" type="email">';
+                        }
+                    ?>
+                </div>
+                <div class="userCommentContentParent">
+                    <label>دیدگاه : </label>
+                    <textarea class="userCommentContent" name="comment_content"></textarea>
+                </div>
+                <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
+                <input name="user_id" type="hidden" value="<?php echo $userId ?>">
+                <input name="comment_parent" type="hidden" value="0">
+                <input name="comment_approved" type="hidden" value="0">
+                <input type="submit" value="Send" name="term_comment_submit">
+            </form> 
+        </div>
+    </div>
     <?php
-
 }
 
 function add_custom_table_to_term_archive($query) {
