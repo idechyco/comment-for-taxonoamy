@@ -16,7 +16,6 @@ Domain Path:  /languages
 if ( ! defined( 'ABSPATH' ) ) {
     exit();
 }
-
 function create_term_comments_table() {
     global $wpdb;
 
@@ -48,16 +47,14 @@ add_action( 'after_setup_theme', 'create_term_comments_table' );
 
 
 function term_comments_admin_enqueue() {
-    wp_register_script( 'term-comments-admin-script', get_template_directory_uri() . '/admin-script.js', false, '1.0.0',true );
-    wp_enqueue_script( 'custom_wp_admin_css' );
+    wp_enqueue_script( 'term-comments-admin-script', plugin_dir_url( __FILE__ ) . '/assets/js/admin-script.js', false, '1.0.0',true );
 }
-add_action( 'admin_enqueue_scripts', 'wpdocs_enqueue_custom_admin_style' );
+add_action( 'admin_enqueue_scripts', 'term_comments_admin_enqueue' );
 
 function term_comments_main_enqueue() {
-    wp_register_script( 'term-comments-main-script', get_template_directory_uri() . '/main-script.js', false, '1.0.0',true );
-    wp_enqueue_script( 'custom_wp_admin_css' );
+    wp_enqueue_script( 'term-comments-main-script', plugin_dir_url( __FILE__ ) . '/assets/js/main-script.js', false, '1.0.0',true );
 }
-add_action( 'wp_enqueue_scripts', 'wpdocs_enqueue_custom_admin_style' );
+add_action( 'wp_enqueue_scripts', 'term_comments_main_enqueue' );
 
 
 
