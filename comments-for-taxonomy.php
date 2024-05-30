@@ -48,8 +48,46 @@ add_action( 'after_setup_theme', 'create_term_comments_table' );
 
 
 function display_custom_term_table(){
-	echo 'موفق باشی پسر !';
-	echo '<div class="">';
+    $current_term_id = get_queried_object_id();
+	$current_user = wp_get_current_user();
+	$userEmail = $current_user->user_email;
+	$userName = $current_user->display_name;
+	$userId = $current_user->ID;
+	echo $current_term_id;
+	// echo '<pre>';
+	// echo print_r($current_user);
+	// echo '</pre>'; ?>
+	<div class="termCommentsFormParent">
+        <form>
+            <div class="userNameAuthorParent">
+                <?php
+                    if ( is_user_logged_in() ){
+                        echo '<input class="userNameLoggedin" name="comment_author" type="hidden" value="'.$userName.'">';
+                    } else{
+                        echo '<label>نام : </label>';
+                        echo '<input class="userNameAuthor" name="comment_author" type="text">';
+                    }
+                ?>
+            </div>
+            <div class="userEmailAuthorParent">
+                <?php
+                    if ( is_user_logged_in() ){
+                        echo '<input class="userNameLoggedin" name="comment_author_email" type="hidden" value="'.$userEmail.'">';
+                    } else{
+                        echo '<label>ایمیل : </label>';
+                        echo '<input class="userNameAuthor" name="comment_author_email" type="email">';
+                    }
+                ?>
+            </div>
+            <div class="userCommentContentParent">
+                <label>دیدگاه : </label>
+                <textarea class="userCommentContent" name="comment_content"></textarea>
+            </div>
+            <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
+            <input name="user_id" type="hidden" value="<?php echo $userId ?>">
+        </form>
+	</div>
+    <?php
 }
 
 function add_custom_table_to_term_archive($query) {
