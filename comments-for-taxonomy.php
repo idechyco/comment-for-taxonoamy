@@ -53,11 +53,16 @@ function display_custom_term_table(){
 	$userEmail = $current_user->user_email;
 	$userName = $current_user->display_name;
 	$userId = $current_user->ID;
-	// echo '<pre>';
-	// echo print_r($current_user);
-	// echo '</pre>'; ?>
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['term_comment_submit'])) {
+        ob_start();
+        handle_term_comment_submit();
+        $data = ob_get_clean();
+        echo $data;
+    }
+    ?>
 	<div class="termCommentsFormParent">
-        <form action="" method="post">
+        <form method="post">
+            <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
             <div class="userNameAuthorParent">
                 <?php
                     if ( is_user_logged_in() ){
@@ -84,9 +89,9 @@ function display_custom_term_table(){
             </div>
             <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
             <input name="user_id" type="hidden" value="<?php echo $userId ?>">
-            <input name="comment_term_id" type="hidden" value="0">
-            <input name="co" type="hidden" value="0">
-            <input type="submit" value="Send">
+            <input name="comment_parent" type="hidden" value="0">
+            <input name="comment_approved" type="hidden" value="0">
+            <input type="submit" value="Send" name="term_comment_submit">
         </form>
 
         
@@ -102,7 +107,7 @@ function add_custom_table_to_term_archive($query) {
 }
 add_action('pre_get_posts', 'add_custom_table_to_term_archive');
 
-function handle_custom_form_submission() {
+function handle_term_comment_submit() {
     if (!isset($_POST['term_comment_form_submit_field']) || !wp_verify_nonce($_POST['term_comment_form_submit_field'], 'term_comment_form_submit')) {
         echo '<p>درخواست معتبر نیست.</p>';
         return;
@@ -116,8 +121,9 @@ function handle_custom_form_submission() {
     $comment_approved = sanitize_text_field($_POST['comment_approved']);
     $comment_parent = sanitize_text_field($_POST['comment_parent']);
     $user_id = sanitize_text_field($_POST['user_id']);
+    echo $comment_parent;
     // Validate input
-    if (empty($comment_term_id) || empty($comment_author) || empty($comment_author_email) || empty($comment_content) || empty($comment_approved) || empty($comment_parent) || empty($user_id)) {
+    if (empty($comment_term_id) || empty($comment_author) || empty($comment_author_email) || empty($comment_content) || $comment_approved=="" || $comment_parent=="" || $user_id=="") {
         echo '<p>لطفا فیلدهای مورد نیاز را تکمیل نمایید.</p>';
         return;
     }
