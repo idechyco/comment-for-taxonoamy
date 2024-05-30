@@ -99,7 +99,7 @@ function display_custom_term_table(){
                     $output .= "<p>" . nl2br(htmlspecialchars($comment->comment_content)) . "</p>";
                     $output .= "</div>";
                     $output .= "<div class='reply'>";
-                    $output .= "<a href='#comment-" . htmlspecialchars($comment->comment_id) . "' class='comment-reply-link'>پاسخ</a>";
+                    $output .= "<a href='#comment-" . htmlspecialchars($comment->comment_id) . "' class='comment-reply-link' data-comment-id='".htmlspecialchars($comment->comment_id)."'>پاسخ</a>";
                     $output .= "</div>";
                     $output .= "</div>";
                     $output .= render_comments($comments, $comment->comment_id);
@@ -218,7 +218,12 @@ function handle_term_comment_submit() {
     );
 
     if ($inserted) {
-        echo '<p>سپاسگزاریم؛ دیدگاه شما پس از بررسی منتشر خواهد شد</p>';
+        if(is_admin()){
+            header("Refresh:0");
+        }
+        else{
+            echo '<p>سپاسگزاریم؛ دیدگاه شما پس از بررسی منتشر خواهد شد</p>';
+        }
     } else {
         echo '<p>دیدگاه ارسال نشد.</p>';
     }
@@ -313,7 +318,14 @@ function display_custom_comments() {
     }
 
     // Display the data
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['term_comment_submit'])) {
+        ob_start();
+        handle_term_comment_submit();
+        $data = ob_get_clean();
+        echo $data;
+    }
     ?>
+    
     <div class="wrap">
         <h1>Custom Comments</h1>
         
@@ -368,8 +380,37 @@ function display_custom_comments() {
                                 <a style="color:red;" href="<?php echo esc_url(add_query_arg(['action' => 'delete', 'comment_id' => $row->comment_id])); ?>" onclick="return confirm('Are you sure you want to delete this comment?');">حذف</a> |
                                 <a href="<?php echo esc_url(add_query_arg(['action' => 'approve', 'comment_id' => $row->comment_id])); ?>">پذیرفتن</a> |
                                 <a href="<?php echo esc_url(add_query_arg(['action' => 'disapprove', 'comment_id' => $row->comment_id])); ?>">رد کردن</a>
+                                <a class="adminReplyComment" href="" data-comment-id="<?php echo $row->comment_id ?>">پاسخ</a>
                             </td>
                         </tr>
+                        <tr data-reply-form="<?php echo $row->comment_id ?>" style="display:none;"><td colspan="9"><div class="comment-reply">
+                            <form method="post">
+                                <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
+                                <?php
+                                $settings = array(
+                                    'wpautop' => true,
+                                    'media_buttons' => false,
+                                    'textarea_name' => 'comment_content',
+                                    'textarea_rows' => 8,
+                                    'editor_class' => 'custom-comment-editor',
+                                    'tinymce' => false, // Disable TinyMCE (visual editor)
+                                    'quicktags' => true // Enable plain text editor
+                                );
+                                wp_editor('', 'custom-comment-reply-'.$row->comment_id, $settings);
+                                ?>
+                                <input name="comment_author" type="hidden" value="<?php echo wp_get_current_user()->display_name ?>">
+                                <input name="comment_author_email" type="hidden" value="<?php echo wp_get_current_user()->user_email ?>">
+                                <input name="comment_term_id" type="hidden" value="<?php echo $row->comment_term_id ?>">
+                                <input name="user_id" type="hidden" value="<?php echo wp_get_current_user()->ID ?>">
+                                <input name="comment_parent" type="hidden" value="<?php echo $row->comment_id ?>">
+                                <input name="comment_approved" type="hidden" value="1">
+                                <p class="reply-submit-buttons termCommentsButtons">
+                                    <input type="submit" value="Send" name="term_comment_submit" class="save button button-primary">
+                                    <button type="button" class="cancel button">لغو</button>
+                                </p>
+                            </form> 
+                        </div>
+                    </td></tr>
                     <?php endforeach; ?>
                 <?php else : ?>
                     <tr>
