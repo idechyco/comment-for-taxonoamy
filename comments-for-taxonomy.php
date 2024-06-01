@@ -182,7 +182,7 @@ function handle_term_comment_submit() {
     $comment_approved = sanitize_text_field($_POST['comment_approved']);
     $comment_parent = sanitize_text_field($_POST['comment_parent']);
     $user_id = sanitize_text_field($_POST['user_id']);
-    echo $comment_parent;
+    // echo $comment_parent;
     // Validate input
     if (empty($comment_term_id) || empty($comment_author) || empty($comment_author_email) || empty($comment_content) || $comment_approved=="" || $comment_parent=="" || $user_id=="") {
         echo '<p>لطفا فیلدهای مورد نیاز را تکمیل نمایید.</p>';
