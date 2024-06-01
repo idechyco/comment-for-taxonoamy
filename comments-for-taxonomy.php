@@ -154,7 +154,7 @@ function display_custom_term_table(){
                 <input name="user_id" type="hidden" value="<?php echo $userId ?>">
                 <input name="comment_parent" type="hidden" value="0">
                 <input name="comment_approved" type="hidden" value="0">
-                <input type="submit" value="Send" name="term_comment_submit">
+                <input type="submit" value="ارسال" name="term_comment_submit">
             </form> 
         </div>
     </div>
@@ -417,7 +417,7 @@ function display_custom_comments() {
                                 <input name="comment_parent" type="hidden" value="<?php echo $row->comment_id ?>">
                                 <input name="comment_approved" type="hidden" value="1">
                                 <p class="reply-submit-buttons termCommentsButtons">
-                                    <input type="submit" value="Send" name="term_comment_submit" class="save button button-primary">
+                                    <input type="submit" value="ارسال" name="term_comment_submit" class="save button button-primary">
                                     <button type="button" class="cancel button">لغو</button>
                                 </p>
                             </form> 
