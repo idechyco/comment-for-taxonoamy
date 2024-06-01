@@ -239,8 +239,9 @@ function custom_comments_menu() {
         'custom-comments',
         'display_custom_comments',
         'data:image/svg+xml;base64,' . base64_encode(
-            '<svg fill="#ffffff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 661.58 661.58"><path class="cls-1" d="m352.84 507.218 242.58-242.58 66.158 66.157-242.58 242.58z"/><path class="cls-1" d="m396.95 595.42-66.16 66.16L88.21 419l242.58-242.58 66.16 66.16L220.53 419z"/><path class="cls-1" d="M573.37 242.58 330.79 485.16 264.63 419l176.42-176.42L264.63 66.16 330.79 0z"/><path class="cls-1" d="m-.003 330.796 242.58-242.58 66.157 66.157-242.58 242.58z"/></svg>')
-    );
+            '<svg fill="#ffffff" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 661.58 661.58"><path class="cls-1" d="m352.84 507.218 242.58-242.58 66.158 66.157-242.58 242.58z"/><path class="cls-1" d="m396.95 595.42-66.16 66.16L88.21 419l242.58-242.58 66.16 66.16L220.53 419z"/><path class="cls-1" d="M573.37 242.58 330.79 485.16 264.63 419l176.42-176.42L264.63 66.16 330.79 0z"/><path class="cls-1" d="m-.003 330.796 242.58-242.58 66.157 66.157-242.58 242.58z"/></svg>'),
+        26
+        );
 
     add_submenu_page(
         null, // This makes the submenu page hidden from the main menu
@@ -284,7 +285,8 @@ function display_custom_comments() {
         $filter_date = sanitize_text_field($_GET['filter_date']);
         $filter .= $wpdb->prepare(" AND DATE(comment_date) = %s", $filter_date);
     }
-    if (!empty($_GET['filter_approved'])) {
+    $filter_approved = '';
+    if (isset($_GET['filter_approved']) && ($_GET['filter_approved']==0 || $_GET['filter_approved']==1)) {
         $filter_approved = sanitize_text_field($_GET['filter_approved']);
         $filter .= $wpdb->prepare(" AND comment_approved = %s", $filter_approved);
     }
@@ -327,19 +329,19 @@ function display_custom_comments() {
     ?>
     
     <div class="wrap">
-        <h1>Custom Comments</h1>
+        <h1>کامنت طبقه‌بندی</h1>
         
         <!-- Filter Form -->
         <form method="get">
             <input type="hidden" name="page" value="custom-comments">
-            <input type="text" name="filter_author" value="<?php echo isset($filter_author) ? esc_attr($filter_author) : ''; ?>" placeholder="Filter by author">
+            <input type="text" name="filter_author" value="<?php echo isset($filter_author) ? esc_attr($filter_author) : ''; ?>" placeholder="نویسنده ...">
             <input type="date" name="filter_date" value="<?php echo isset($filter_date) ? esc_attr($filter_date) : ''; ?>" placeholder="Filter by date">
             <select name="filter_approved">
-                <option value="">Filter by approval</option>
-                <option value="1" <?php selected($filter_approved, '1'); ?>>Approved</option>
-                <option value="0" <?php selected($filter_approved, '0'); ?>>Pending</option>
+                <option value="">وضعیت ...</option>
+                <option value="1" <?php selected($filter_approved, '1'); ?>>تایید شده</option>
+                <option value="0" <?php selected($filter_approved, '0'); ?>>در انتظار تایید</option>
             </select>
-            <button type="submit">Filter</button>
+            <button type="submit" class="button button-primary">فیلتر</button>
         </form>
 
         <!-- Data Table -->
@@ -348,42 +350,52 @@ function display_custom_comments() {
                 <tr>
                     <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_term_id', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">عنوان</a></th>
                     <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_author', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">نویسنده</a></th>
-                    <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_author_email', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">ایمیل</a></th>
                     <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_date', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">تاریخ</a></th>
                     <th>دیدگاه</th>
                     <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_approved', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">وضعیت</a></th>
-                    <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_parent', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">والد</a></th>
-                    <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'user_id', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">کاربر</a></th>
+                    <th><a href="<?php echo esc_url(add_query_arg(['sort_by' => 'comment_parent', 'order' => $order === 'asc' ? 'desc' : 'asc'])); ?>">در پاسخ به</a></th>
                     <th>عملیات</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!empty($results)) : ?>
+                    <?php
+                        // echo '<pre>';
+                        // print_r($results);
+                        // echo '</pre>';
+                    ?>
                     <?php foreach ($results as $row) : ?>
                         <tr>
-                            <td><?php echo esc_html(isset($term_names[$row->comment_term_id]) ? $term_names[$row->comment_term_id] : ''); ?></td>
-                            <td><?php echo esc_html($row->comment_author); ?></td>
-                            <td><?php echo esc_html($row->comment_author_email); ?></td>
+                            <td><a href="<?php echo get_term_link( (int) $row->comment_term_id, '' ) ?>" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.607 11.035v7.929a2.27 2.27 0 0 1-2.3 2.286H5.05a2.27 2.27 0 0 1-2.299-2.3V7.693a2.273 2.273 0 0 1 2.3-2.3h7.928M21.25 2.75 10.679 13.321M15.964 2.75h5.286v5.286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>&nbsp&nbsp<?php echo esc_html(isset($term_names[$row->comment_term_id]) ? $term_names[$row->comment_term_id] : ''); ?></td>
+                            <td><span style="font-weight:bold;"><?php echo esc_html($row->comment_author); ?></span><br><span style="color:#757575;"><?php echo esc_html($row->comment_author_email); ?></span><br><span style="background-color:<?php echo esc_html($row->user_id == 0 ? '#d8e5eb' : '#d8ebd8'); ?>;padding:2px;border-radius:3px;"><?php echo esc_html($row->user_id == 0 ? 'مهمان' : 'کاربر سایت'); ?></span></td>
                             <td><?php echo esc_html(date('Y-m-d H:i:s', strtotime($row->comment_date . ' +3 hours 30 minutes'))); ?></td>
                             <td><?php echo esc_html($row->comment_content); ?></td>
                             <td>
                                 <?php if ($row->comment_approved == '1') : ?>
-                                    <span><svg width="24" height="24" viewBox="0 0 24 24" fill="#2fbd47" xmlns="http://www.w3.org/2000/svg"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.26 10.26 0 0 0 12 1.75m5.07 8.34-5.37 5.37a1.8 1.8 0 0 1-.65.44c-.497.2-1.053.2-1.55 0a2 2 0 0 1-.65-.44L6.19 12.8a1.001 1.001 0 1 1 1.41-1.42l2.67 2.67 5.38-5.37a1 1 0 0 1 1.42 0 1 1 0 0 1 0 1.38z" fill="#2fbd47"/></svg></span>
+                                    <a href="<?php echo esc_url(add_query_arg(['action' => 'disapprove', 'comment_id' => $row->comment_id])); ?>"><svg width="24" height="24" viewBox="0 0 24 24" fill="#2fbd47" xmlns="http://www.w3.org/2000/svg"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.26 10.26 0 0 0 12 1.75m5.07 8.34-5.37 5.37a1.8 1.8 0 0 1-.65.44c-.497.2-1.053.2-1.55 0a2 2 0 0 1-.65-.44L6.19 12.8a1.001 1.001 0 1 1 1.41-1.42l2.67 2.67 5.38-5.37a1 1 0 0 1 1.42 0 1 1 0 0 1 0 1.38z" fill="#2fbd47"/></svg></a>
                                 <?php else : ?>
-                                    <span><svg width="24" height="24" viewBox="0 0 24 24" fill="#c2c2c2" xmlns="http://www.w3.org/2000/svg"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.26 10.26 0 0 0 12 1.75m3.88 14.13a1 1 0 0 1-.71.3 1 1 0 0 1-.7-.3l-3.46-3.46V5.68a1 1 0 1 1 2 0v5.92l2.87 2.87a1 1 0 0 1 0 1.41" fill="#c2c2c2"/></svg></span>
+                                    <a href="<?php echo esc_url(add_query_arg(['action' => 'approve', 'comment_id' => $row->comment_id])); ?>"><svg width="24" height="24" viewBox="0 0 24 24" fill="#c2c2c2" xmlns="http://www.w3.org/2000/svg"><path d="M12 1.75A10.25 10.25 0 1 0 22.25 12 10.26 10.26 0 0 0 12 1.75m3.88 14.13a1 1 0 0 1-.71.3 1 1 0 0 1-.7-.3l-3.46-3.46V5.68a1 1 0 1 1 2 0v5.92l2.87 2.87a1 1 0 0 1 0 1.41" fill="#c2c2c2"/></svg></a>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo esc_html($row->comment_parent); ?></td>
-                            <td><?php echo esc_html($row->user_id == 0 ? 'مهمان' : 'کاربر سایت'); ?></td>
+                            <td><?php
+                            // echo esc_html($row->comment_parent);
+                            if($row->comment_parent==0){
+                                echo '-';
+                            }
+                            else{
+                                $commentParentQuery = "SELECT * FROM {$wpdb->prefix}term_comments WHERE comment_id=%d";
+                                $preparedCommentParentQuery = $wpdb->prepare($commentParentQuery,$row->comment_parent);
+                                $commentParentResult = $wpdb->get_row($preparedCommentParentQuery);
+                                echo $commentParentResult->comment_author;
+                            }
+                            ?></td>
                             <td>
                                 <a href="<?php echo esc_url(add_query_arg(['page' => 'edit-comment', 'comment_id' => $row->comment_id])); ?>">ویرایش</a> |
                                 <a style="color:red;" href="<?php echo esc_url(add_query_arg(['action' => 'delete', 'comment_id' => $row->comment_id])); ?>" onclick="return confirm('Are you sure you want to delete this comment?');">حذف</a> |
-                                <a href="<?php echo esc_url(add_query_arg(['action' => 'approve', 'comment_id' => $row->comment_id])); ?>">پذیرفتن</a> |
-                                <a href="<?php echo esc_url(add_query_arg(['action' => 'disapprove', 'comment_id' => $row->comment_id])); ?>">رد کردن</a>
                                 <a class="adminReplyComment" href="" data-comment-id="<?php echo $row->comment_id ?>">پاسخ</a>
                             </td>
                         </tr>
-                        <tr data-reply-form="<?php echo $row->comment_id ?>" style="display:none;"><td colspan="9"><div class="comment-reply">
+                        <tr data-reply-form="<?php echo $row->comment_id ?>" style="display:none;"><td colspan="7"><div class="comment-reply">
                             <form method="post">
                                 <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
                                 <?php
