@@ -109,53 +109,60 @@ function display_custom_term_table(){
             }
             return $output;
         }
+        $customClasses = '';
+        $settings = get_option('term_comment_settings', []);
+        if(isset($settings['classes']) && $settings['classes']!=""){
+            $customClasses = ' '.str_replace(',',' ',$settings['classes']);
+        }
         ?>
-        <div class="termCommentsListParent">
-            <?php
-            global $wpdb;
-            $results = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM wp_term_comments WHERE comment_approved = 1 AND comment_term_id = %d",
-                $current_term_id
-            ));
-            if ($results) {
-                echo render_comments($results);
-            }
-            ?>
-        </div>
-        <div class="termCommentsFormParent">
-            <h3 class="termCommentsFormTitle">دیدگاهتان را بنویسید</h3>
-            <form method="post">
-                <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
-                <div class="userNameAuthorParent">
-                    <?php
-                        if ( is_user_logged_in() ){
-                            echo '<input class="userNameLoggedin" name="comment_author" type="hidden" value="'.$userName.'">';
-                        } else{
-                            echo '<label>نام : </label>';
-                            echo '<input class="userNameAuthor" name="comment_author" type="text">';
-                        }
-                    ?>
-                </div>
-                <div class="userEmailAuthorParent">
-                    <?php
-                        if ( is_user_logged_in() ){
-                            echo '<input class="userNameLoggedin" name="comment_author_email" type="hidden" value="'.$userEmail.'">';
-                        } else{
-                            echo '<label>ایمیل : </label>';
-                            echo '<input class="userNameAuthor" name="comment_author_email" type="email">';
-                        }
-                    ?>
-                </div>
-                <div class="userCommentContentParent">
-                    <label>دیدگاه : </label>
-                    <textarea class="userCommentContent" name="comment_content"></textarea>
-                </div>
-                <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
-                <input name="user_id" type="hidden" value="<?php echo $userId ?>">
-                <input name="comment_parent" type="hidden" value="0">
-                <input name="comment_approved" type="hidden" value="0">
-                <input type="submit" value="ارسال" name="term_comment_submit">
-            </form> 
+        <div class="taxCommentWrapper<?php echo $customClasses; ?>">
+            <div class="termCommentsListParent">
+                <?php
+                global $wpdb;
+                $results = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM wp_term_comments WHERE comment_approved = 1 AND comment_term_id = %d",
+                    $current_term_id
+                ));
+                if ($results) {
+                    echo render_comments($results);
+                }
+                ?>
+            </div>
+            <div class="termCommentsFormParent">
+                <h3 class="termCommentsFormTitle">دیدگاهتان را بنویسید</h3>
+                <form method="post">
+                    <?php echo wp_nonce_field('term_comment_form_submit', 'term_comment_form_submit_field',true,false); ?>
+                    <div class="userNameAuthorParent">
+                        <?php
+                            if ( is_user_logged_in() ){
+                                echo '<input class="userNameLoggedin" name="comment_author" type="hidden" value="'.$userName.'">';
+                            } else{
+                                echo '<label>نام : </label>';
+                                echo '<input class="userNameAuthor" name="comment_author" type="text">';
+                            }
+                        ?>
+                    </div>
+                    <div class="userEmailAuthorParent">
+                        <?php
+                            if ( is_user_logged_in() ){
+                                echo '<input class="userNameLoggedin" name="comment_author_email" type="hidden" value="'.$userEmail.'">';
+                            } else{
+                                echo '<label>ایمیل : </label>';
+                                echo '<input class="userNameAuthor" name="comment_author_email" type="email">';
+                            }
+                        ?>
+                    </div>
+                    <div class="userCommentContentParent">
+                        <label>دیدگاه : </label>
+                        <textarea class="userCommentContent" name="comment_content"></textarea>
+                    </div>
+                    <input name="comment_term_id" type="hidden" value="<?php echo $current_term_id ?>">
+                    <input name="user_id" type="hidden" value="<?php echo $userId ?>">
+                    <input name="comment_parent" type="hidden" value="0">
+                    <input name="comment_approved" type="hidden" value="0">
+                    <input type="submit" value="ارسال" name="term_comment_submit">
+                </form> 
+            </div>
         </div>
     </div>
     <?php
@@ -166,22 +173,25 @@ function add_custom_table_to_term_archive($query) {
     $taxArray = [];
     $categoryTrue = false;
     $tagTrue = false;
-    foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
-        if($taxKey=='category'){
-            $categoryTrue = true;
+    if(isset($currentSetting['taxonomies'])){
+        foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
+            if($taxKey=='category'){
+                $categoryTrue = true;
+            }
+            elseif($taxKey=='tag'){
+                $tagTrue = true;
+            }
+            else{
+                $taxArray[] = $taxKey;
+            }
         }
-        elseif($taxKey=='tag'){
-            $tagTrue = true;
-        }
-        else{
-            $taxArray[] = $taxKey;
+        if ($query->is_main_query() && (is_tax($taxArray) || ($categoryTrue && is_category()) || ($tagTrue && is_tag()))) {
+            // add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
+            add_action('get_footer', 'display_custom_term_table');
+            
         }
     }
-    if ($query->is_main_query() && (is_tax($taxArray) || ($categoryTrue && is_category()) || ($tagTrue && is_tag()))) {
-        // add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
-        add_action('get_footer', 'display_custom_term_table');
-        
-    }
+    
 }
 add_action('pre_get_posts', 'add_custom_table_to_term_archive');
 
@@ -577,6 +587,8 @@ function term_comment_setting_page() {
             <?php settings_fields('term_comment_settings_group'); ?>
             <?php do_settings_sections('term_comment_settings_group'); ?>
             <h2>طبقه‌بندی‌ها</h2>
+            <label for="customCommentListClass">کلاس‌های دلخواه (با کاما جدا کنید)</label>
+            <input type="text" name="term_comment_settings[classes]" id="customCommentListClass" value="<?php echo isset($settings['classes']) ? $settings['classes']:'' ?>">
             <table class="form-table">
                 <?php foreach ($taxonomies as $taxonomy) : ?>
                     <tr valign="top">
