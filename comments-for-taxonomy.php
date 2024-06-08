@@ -560,21 +560,24 @@ function display_custom_comments() {
     <?php
 }
 function term_comment_setting_page() {
-    $currentSetting = term_comment_get_settings();
-    $taxArray = [];
-    $categoryTrue = false;
-    $tagTrue = false;
-    foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
-        if($taxKey=='category'){
-            $categoryTrue = true;
-        }
-        elseif($taxKey=='tag'){
-            $tagTrue = true;
-        }
-        else{
-            $taxArray[] = $taxKey;
-        }
-    }
+    // $currentSetting = term_comment_get_settings();
+    // $taxArray = [];
+    // $categoryTrue = false;
+    // $tagTrue = false;
+    // if(isset($currentSetting['taxonomies'])){
+        
+    // }
+    // foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
+    //     if($taxKey=='category'){
+    //         $categoryTrue = true;
+    //     }
+    //     elseif($taxKey=='tag'){
+    //         $tagTrue = true;
+    //     }
+    //     else{
+    //         $taxArray[] = $taxKey;
+    //     }
+    // }
     // Retrieve saved settings
     $settings = get_option('term_comment_settings', []);
 
