@@ -164,11 +164,23 @@ function display_custom_term_table(){
 function add_custom_table_to_term_archive($query) {
     $currentSetting = term_comment_get_settings();
     $taxArray = [];
+    $categoryTrue = false;
+    $tagTrue = false;
     foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
-        $taxArray[] = $taxKey;
+        if($taxKey=='category'){
+            $categoryTrue = true;
+        }
+        elseif($taxKey=='tag'){
+            $tagTrue = true;
+        }
+        else{
+            $taxArray[] = $taxKey;
+        }
     }
-    if ($query->is_main_query() && (is_tax($taxArray))) {
-        add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
+    if ($query->is_main_query() && (is_tax($taxArray) || ($categoryTrue && is_category()) || ($tagTrue && is_tag()))) {
+        // add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
+        add_action('get_footer', 'display_custom_term_table');
+        
     }
 }
 add_action('pre_get_posts', 'add_custom_table_to_term_archive');
@@ -223,10 +235,7 @@ function handle_term_comment_submit() {
     );
 
     if ($inserted) {
-        if(is_admin()){
-            header("Refresh:0");
-        }
-        else{
+        if(!is_admin()){
             echo '<p>سپاسگزاریم؛ دیدگاه شما پس از بررسی منتشر خواهد شد</p>';
         }
     } else {
@@ -269,10 +278,96 @@ function custom_comments_menu() {
         'term_comment_setting_page' // Callback function
     );
 }
-
-function display_custom_comments() {
+function edit_comment_page() {
     global $wpdb;
 
+    $comment_id = isset($_GET['comment_id']) ? intval($_GET['comment_id']) : 0;
+
+    if ($comment_id) {
+        if (isset($_POST['update_comment'])) {
+            $comment_author = sanitize_text_field($_POST['comment_author']);
+            $comment_author_email = sanitize_email($_POST['comment_author_email']);
+            $comment_content = sanitize_textarea_field($_POST['comment_content']);
+            $comment_approved = sanitize_text_field($_POST['comment_approved']);
+
+            $wpdb->update(
+                "{$wpdb->prefix}term_comments",
+                [
+                    'comment_author' => $comment_author,
+                    'comment_author_email' => $comment_author_email,
+                    'comment_content' => $comment_content,
+                    'comment_approved' => $comment_approved,
+                ],
+                ['comment_id' => $comment_id]
+            );
+
+            echo '<div class="updated"><p>کامنت با موفقیت به روز شد.</p></div>';
+        }
+        $comment = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}term_comments WHERE comment_id = %d", $comment_id));
+
+        if (!$comment) {
+            wp_die('دیدگاه یافت نشد');
+        }
+
+        
+    } else {
+        wp_die('Invalid comment ID.');
+    }
+
+    ?>
+    <div class="wrap">
+        <h1>ویرایش کامنت</h1>
+
+        <form method="post" action"/"">
+            <table class="form-table">
+                <tr>
+                    <th>نویسنده</th>
+                    <td><input type="text" name="comment_author" value="<?php echo esc_attr($comment->comment_author); ?>" required></td>
+                </tr>
+                <tr>
+                    <th>ایمیل</th>
+                    <td><input type="email" name="comment_author_email" value="<?php echo esc_attr($comment->comment_author_email); ?>" required></td>
+                </tr>
+                <tr>
+                    <th>محتوا</th>
+                    <?php
+                    $settings = array(
+                        'wpautop' => true,
+                        'media_buttons' => false,
+                        'textarea_name' => 'comment_content',
+                        'textarea_rows' => 8,
+                        'editor_class' => 'custom-comment-editor',
+                        'tinymce' => false, // Disable TinyMCE (visual editor)
+                        'quicktags' => true // Enable plain text editor
+                    );
+                    wp_editor($comment->comment_content, 'custom-comment-content', $settings);
+                    ?>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>وضعیت</th>
+                    <td>
+                        <select name="comment_approved">
+                            <option value="1" <?php selected($comment->comment_approved, '1'); ?>>Approved</option>
+                            <option value="0" <?php selected($comment->comment_approved, '0'); ?>>Pending</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <input type="submit" name="update_comment" class="button button-primary" value="به‌روزرسانی">
+        </form>
+    </div>
+    <?php
+}
+function display_custom_comments() {
+    global $wpdb;
+    // Display the data
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['term_comment_submit'])) {
+        ob_start();
+        handle_term_comment_submit();
+        $data = ob_get_clean();
+        echo $data;
+    }
     // Handle actions
     if (isset($_GET['action'])) {
         $action = sanitize_text_field($_GET['action']);
@@ -336,13 +431,7 @@ function display_custom_comments() {
         }
     }
 
-    // Display the data
-    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['term_comment_submit'])) {
-        ob_start();
-        handle_term_comment_submit();
-        $data = ob_get_clean();
-        echo $data;
-    }
+    
     ?>
     
     <div class="wrap">
@@ -376,11 +465,6 @@ function display_custom_comments() {
             </thead>
             <tbody>
                 <?php if (!empty($results)) : ?>
-                    <?php
-                        // echo '<pre>';
-                        // print_r($results);
-                        // echo '</pre>';
-                    ?>
                     <?php foreach ($results as $row) : ?>
                         <tr>
                             <td><a href="<?php echo get_term_link( (int) $row->comment_term_id, '' ) ?>" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18.607 11.035v7.929a2.27 2.27 0 0 1-2.3 2.286H5.05a2.27 2.27 0 0 1-2.299-2.3V7.693a2.273 2.273 0 0 1 2.3-2.3h7.928M21.25 2.75 10.679 13.321M15.964 2.75h5.286v5.286" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>&nbsp&nbsp<?php echo esc_html(isset($term_names[$row->comment_term_id]) ? $term_names[$row->comment_term_id] : ''); ?></td>
@@ -465,76 +549,22 @@ function display_custom_comments() {
     </div>
     <?php
 }
-
-function edit_comment_page() {
-    global $wpdb;
-
-    $comment_id = isset($_GET['comment_id']) ? intval($_GET['comment_id']) : 0;
-
-    if ($comment_id) {
-        $comment = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}term_comments WHERE comment_id = %d", $comment_id));
-
-        if (!$comment) {
-            wp_die('دیدگاه یافت نشد');
-        }
-
-        if (isset($_POST['update_comment'])) {
-            $comment_author = sanitize_text_field($_POST['comment_author']);
-            $comment_author_email = sanitize_email($_POST['comment_author_email']);
-            $comment_content = sanitize_textarea_field($_POST['comment_content']);
-            $comment_approved = sanitize_text_field($_POST['comment_approved']);
-
-            $wpdb->update(
-                "{$wpdb->prefix}term_comments",
-                [
-                    'comment_author' => $comment_author,
-                    'comment_author_email' => $comment_author_email,
-                    'comment_content' => $comment_content,
-                    'comment_approved' => $comment_approved,
-                ],
-                ['comment_id' => $comment_id]
-            );
-
-            echo '<div class="updated"><p>کامنت با موفقیت به روز شد.</p></div>';
-        }
-    } else {
-        wp_die('Invalid comment ID.');
-    }
-
-    ?>
-    <div class="wrap">
-        <h1>ویرایش کامنت</h1>
-
-        <form method="post">
-            <table class="form-table">
-                <tr>
-                    <th>نویسنده</th>
-                    <td><input type="text" name="comment_author" value="<?php echo esc_attr($comment->comment_author); ?>" required></td>
-                </tr>
-                <tr>
-                    <th>ایمیل</th>
-                    <td><input type="email" name="comment_author_email" value="<?php echo esc_attr($comment->comment_author_email); ?>" required></td>
-                </tr>
-                <tr>
-                    <th>محتوا</th>
-                    <td><textarea name="comment_content" required><?php echo esc_textarea($comment->comment_content); ?></textarea></td>
-                </tr>
-                <tr>
-                    <th>وضعیت</th>
-                    <td>
-                        <select name="comment_approved">
-                            <option value="1" <?php selected($comment->comment_approved, '1'); ?>>Approved</option>
-                            <option value="0" <?php selected($comment->comment_approved, '0'); ?>>Pending</option>
-                        </select>
-                    </td>
-                </tr>
-            </table>
-            <input type="submit" name="update_comment" class="button button-primary" value="به‌روزرسانی">
-        </form>
-    </div>
-    <?php
-}
 function term_comment_setting_page() {
+    $currentSetting = term_comment_get_settings();
+    $taxArray = [];
+    $categoryTrue = false;
+    $tagTrue = false;
+    foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
+        if($taxKey=='category'){
+            $categoryTrue = true;
+        }
+        elseif($taxKey=='tag'){
+            $tagTrue = true;
+        }
+        else{
+            $taxArray[] = $taxKey;
+        }
+    }
     // Retrieve saved settings
     $settings = get_option('term_comment_settings', []);
 
@@ -542,11 +572,11 @@ function term_comment_setting_page() {
     $taxonomies = get_taxonomies([], 'objects');
     ?>
     <div class="wrap">
-        <h1>Term Comment Settings</h1>
+        <h1>تنظیمات کامنت طبقه‌بندی</h1>
         <form method="post" action="options.php">
             <?php settings_fields('term_comment_settings_group'); ?>
             <?php do_settings_sections('term_comment_settings_group'); ?>
-            <h2>Taxonomies</h2>
+            <h2>طبقه‌بندی‌ها</h2>
             <table class="form-table">
                 <?php foreach ($taxonomies as $taxonomy) : ?>
                     <tr valign="top">
