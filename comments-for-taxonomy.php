@@ -162,7 +162,12 @@ function display_custom_term_table(){
 }
 
 function add_custom_table_to_term_archive($query) {
-    if ($query->is_main_query() && (is_tax() || is_category() || is_tag())) {
+    $currentSetting = term_comment_get_settings();
+    $taxArray = [];
+    foreach($currentSetting['taxonomies'] as $taxKey=>$taxVal){
+        $taxArray[] = $taxKey;
+    }
+    if ($query->is_main_query() && (is_tax($taxArray))) {
         add_action('woocommerce_after_shop_loop', 'display_custom_term_table');
     }
 }
@@ -229,6 +234,10 @@ function handle_term_comment_submit() {
     }
 }
 
+function term_comment_register_settings() {
+    register_setting('term_comment_settings_group', 'term_comment_settings');
+}
+add_action('admin_init', 'term_comment_register_settings');
 
 add_action('admin_menu', 'custom_comments_menu');
 function custom_comments_menu() {
@@ -250,6 +259,14 @@ function custom_comments_menu() {
         'manage_options',
         'edit-comment',
         'edit_comment_page'
+    );
+    add_submenu_page(
+        'custom-comments', // Parent menu slug
+        'تنظیمات', // Page title
+        'تنظیمات', // Menu title
+        'manage_options', // Capability
+        'term-comment-setting', // Menu slug
+        'term_comment_setting_page' // Callback function
     );
 }
 
@@ -517,7 +534,37 @@ function edit_comment_page() {
     </div>
     <?php
 }
+function term_comment_setting_page() {
+    // Retrieve saved settings
+    $settings = get_option('term_comment_settings', []);
 
+    // Retrieve all taxonomies
+    $taxonomies = get_taxonomies([], 'objects');
+    ?>
+    <div class="wrap">
+        <h1>Term Comment Settings</h1>
+        <form method="post" action="options.php">
+            <?php settings_fields('term_comment_settings_group'); ?>
+            <?php do_settings_sections('term_comment_settings_group'); ?>
+            <h2>Taxonomies</h2>
+            <table class="form-table">
+                <?php foreach ($taxonomies as $taxonomy) : ?>
+                    <tr valign="top">
+                        <th scope="row"><?php echo esc_html($taxonomy->labels->name); ?></th>
+                        <td>
+                            <input type="checkbox" name="term_comment_settings[taxonomies][<?php echo esc_attr($taxonomy->name); ?>]" value="1" <?php checked(isset($settings['taxonomies'][$taxonomy->name])); ?> />
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php submit_button(); ?>
+        </form>
+    </div>
+    <?php
+}
 
-
+// Retrieve settings
+function term_comment_get_settings() {
+    return get_option('term_comment_settings', []);
+}
 ?>
