@@ -582,7 +582,7 @@ function term_comment_setting_page() {
     $settings = get_option('term_comment_settings', []);
 
     // Retrieve all taxonomies
-    $taxonomies = get_taxonomies([], 'objects');
+    $taxonomies = get_taxonomies(['show_ui'=>true], 'objects');
     ?>
     <div class="wrap">
         <h1>تنظیمات کامنت طبقه‌بندی</h1>
